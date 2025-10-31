@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Caça-Palavras — Dinamica OE</title>
+  <title>Caça-Palavras — Nath Flecher</title>
   <style>
     :root { --accent:#2b6cb0; --accent-2:#2c7a7b; }
     body { font-family: Inter, system-ui, Arial; display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 28px; background: #f7fafc; color: #0f172a; }
@@ -21,9 +21,9 @@
   </style>
 </head>
 <body>
-  <h1>Caça-Palavras: encontre o seu PSI</h1>
+  <h1>Caça-Palavras: encontre "NATHFLECHER"</h1>
   <div class="info">
-    <div class="hint">Clique nas letras, em ordem, para encontrar a sua direção. Você pode clicar de novo para desmarcar.</div>
+    <div class="hint">Clique nas letras, em ordem, para formar o nome <strong>NATHFLECHER</strong> (sem espaço). Você pode clicar de novo para desmarcar.</div>
   </div>
 
   <div id="board" class="board" aria-label="grade do caça palavras"></div>
@@ -38,32 +38,49 @@
 
   <script>
     const TARGET = 'NATHFLECHER';
-    const ROWS = 12;
-    const COLS = 12;
-
+    const SIZE = 12;
     const directions = [
-      { dr: 0, dc: 1 },  // direita
-      { dr: 1, dc: 0 },  // para baixo
-      { dr: 1, dc: 1 },  // diagonal para baixo direita
-      { dr: -1, dc: 1 }  // diagonal para cima direita
+      { dr: 0, dc: 1 }, { dr: 1, dc: 0 }, { dr: 1, dc: 1 }, { dr: -1, dc: 1 }
     ];
-
-    const dir = directions[Math.floor(Math.random() * directions.length)];
-    const startRow = Math.floor(Math.random() * (ROWS - (dir.dr * (TARGET.length - 1))));
-    const startCol = Math.floor(Math.random() * (COLS - (dir.dc * (TARGET.length - 1))));
 
     function randLetter() {
       const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
       return alphabet[Math.floor(Math.random() * alphabet.length)];
     }
 
-    const grid = Array.from({ length: ROWS }, () => Array.from({ length: COLS }, () => randLetter()));
-
-    for (let i = 0; i < TARGET.length; i++) {
-      const r = startRow + i * dir.dr;
-      const c = startCol + i * dir.dc;
-      if (r >= 0 && r < ROWS && c >= 0 && c < COLS) grid[r][c] = TARGET[i];
+    function createGrid() {
+      return Array.from({ length: SIZE }, () => Array.from({ length: SIZE }, () => randLetter()));
     }
+
+    function placeWord(grid) {
+      let placed = false;
+      while (!placed) {
+        const dir = directions[Math.floor(Math.random() * directions.length)];
+        const maxRow = SIZE - (dir.dr ? TARGET.length : 0);
+        const maxCol = SIZE - (dir.dc ? TARGET.length : 0);
+        const startRow = Math.floor(Math.random() * maxRow);
+        const startCol = Math.floor(Math.random() * maxCol);
+
+        let canPlace = true;
+        for (let i = 0; i < TARGET.length; i++) {
+          const r = startRow + i * dir.dr;
+          const c = startCol + i * dir.dc;
+          if (r < 0 || r >= SIZE || c < 0 || c >= SIZE) { canPlace = false; break; }
+        }
+
+        if (canPlace) {
+          for (let i = 0; i < TARGET.length; i++) {
+            const r = startRow + i * dir.dr;
+            const c = startCol + i * dir.dc;
+            grid[r][c] = TARGET[i];
+          }
+          placed = true;
+        }
+      }
+    }
+
+    const grid = createGrid();
+    placeWord(grid);
 
     const board = document.getElementById('board');
     const selCountEl = document.getElementById('selCount');
@@ -71,8 +88,8 @@
 
     function draw() {
       board.innerHTML = '';
-      for (let r = 0; r < ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
+      for (let r = 0; r < SIZE; r++) {
+        for (let c = 0; c < SIZE; c++) {
           const letter = grid[r][c];
           const cell = document.createElement('div');
           cell.className = 'cell';
@@ -88,16 +105,12 @@
       updateStatus();
     }
 
-    function onCellClick(e) {
+    function onCellClick() {
       const r = Number(this.dataset.r);
       const c = Number(this.dataset.c);
       const key = `${r},${c}`;
       const idx = selection.findIndex(s => s.key === key);
-      if (idx > -1) {
-        selection.splice(idx, 1);
-      } else {
-        selection.push({ key, r, c, letter: this.dataset.letter });
-      }
+      if (idx > -1) { selection.splice(idx, 1); } else { selection.push({ key, r, c, letter: this.dataset.letter }); }
       renderSelection();
     }
 
@@ -110,16 +123,14 @@
       updateStatus();
     }
 
-    function updateStatus() {
-      selCountEl.textContent = selection.length;
-    }
+    function updateStatus() { selCountEl.textContent = selection.length; }
 
     document.getElementById('check').addEventListener('click', () => {
       const formed = selection.map(s => s.letter).join('');
       if (formed === TARGET) {
         selection.forEach(s => {
           const el = document.querySelector(`.cell[data-r='${s.r}'][data-c='${s.c}']`);
-          if (el) { el.classList.remove('selected'); el.classList.add('found'); }
+          if (el) el.classList.remove('selected'), el.classList.add('found');
         });
         selection = [];
         updateStatus();
@@ -141,11 +152,26 @@
 
     document.getElementById('reveal').addEventListener('click', () => {
       document.querySelectorAll('.cell').forEach(el => el.classList.remove('found'));
-      for (let i = 0; i < TARGET.length; i++) {
-        const r = startRow + i * dir.dr;
-        const c = startCol + i * dir.dc;
-        const el = document.querySelector(`.cell[data-r='${r}'][data-c='${c}']`);
-        if (el) el.classList.add('found');
+      for (let r = 0; r < SIZE; r++) {
+        for (let c = 0; c < SIZE; c++) {
+          if (grid[r][c] === TARGET[0]) {
+            for (const dir of directions) {
+              let match = true;
+              for (let i = 0; i < TARGET.length; i++) {
+                const nr = r + i * dir.dr;
+                const nc = c + i * dir.dc;
+                if (nr < 0 || nr >= SIZE || nc < 0 || nc >= SIZE || grid[nr][nc] !== TARGET[i]) { match = false; break; }
+              }
+              if (match) {
+                for (let i = 0; i < TARGET.length; i++) {
+                  const el = document.querySelector(`.cell[data-r='${r + i * dir.dr}'][data-c='${c + i * dir.dc}']`);
+                  if (el) el.classList.add('found');
+                }
+                return;
+              }
+            }
+          }
+        }
       }
     });
 
