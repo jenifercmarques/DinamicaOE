@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Caça-Palavras — Econtre o PSIr</title>
+  <title>Caça-Palavras — Econtre o PSI</title>
   <style>
     :root { --accent:#2b6cb0; --accent-2:#2c7a7b; }
     body { font-family: Inter, system-ui, Arial; display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 28px; background: #f7fafc; color: #0f172a; }
@@ -23,7 +23,7 @@
 <body>
   <h1>Caça-Palavras - Dinamica OE</h1>
   <div class="info">
-    <div class="hint">Clique nas letras, em ordem, para encontrar a sua direção. Você pode clicar de novo para desmarcar.</div>
+    <div class="hint">Clique nas letras, em ordem, para encontrar o seu caminho Você pode clicar de novo para desmarcar.</div>
   </div>
 
   <div id="board" class="board" aria-label="grade do caça palavras"></div>
@@ -134,7 +134,7 @@
         selection = [];
         updateStatus();
         // Pop-up ao acertar
-        alert(`Parabéns! A palavra é ${TARGET}. Agora, encontre sua direção.`);
+        alert(`Parabéns! A palavra é ${TARGET}. Agora, encontre o seu CAMINHO.`);
       } else {
         selection.forEach(s => {
           const el = document.querySelector(`.cell[data-r='${s.r}'][data-c='${s.c}']`);
