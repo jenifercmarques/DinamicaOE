@@ -5,31 +5,32 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Caça-Palavras — Dinamica OE</title>
   <style>
-    :root{--accent:#2b6cb0;--accent-2:#2c7a7b}
-    body{font-family:Inter, system-ui, Arial;display:flex;flex-direction:column;align-items:center;gap:18px;padding:28px;background:#f7fafc;color:#0f172a}
-    h1{margin:0;font-size:1.4rem}
-    .board{display:grid;grid-template-columns:repeat(14,34px);gap:4px;user-select:none}
-    .cell{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:white;border:1px solid #e2e8f0;font-weight:700;cursor:pointer;transition:all .3s}
-    .cell.selected{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:white}
-    .cell.found{background:linear-gradient(135deg,#38a169,#2f855a);color:white;border-color:transparent}
-    .cell.wrong{background:#fecaca;color:#991b1b;border-color:#ef4444}
-    .controls{display:flex;gap:8px}
-    button{padding:8px 12px;border-radius:8px;border:1px solid #cbd5e1;background:white;cursor:pointer}
-    .info{max-width:720px;text-align:center;color:#334155}
-    .status{font-weight:700}
-    .hint{font-size:.9rem;color:#475569}
+    :root { --accent:#2b6cb0; --accent-2:#2c7a7b; }
+    body { font-family: Inter, system-ui, Arial; display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 28px; background: #f7fafc; color: #0f172a; }
+    h1 { margin: 0; font-size: 1.4rem; }
+    .board { display: grid; grid-template-columns: repeat(12, 34px); gap: 4px; user-select: none; }
+    .cell { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 6px; background: white; border: 1px solid #e2e8f0; font-weight: 700; cursor: pointer; transition: all .3s; }
+    .cell.selected { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: white; }
+    .cell.found { background: linear-gradient(135deg, #38a169, #2f855a); color: white; border-color: transparent; }
+    .cell.wrong { background: #fecaca; color: #991b1b; border-color: #ef4444; }
+    .controls { display: flex; gap: 8px; }
+    button { padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; cursor: pointer; }
+    .info { max-width: 720px; text-align: center; color: #334155; }
+    .status { font-weight: 700; }
+    .hint { font-size: .9rem; color: #475569; }
   </style>
 </head>
 <body>
-  <h1>Caça-Palavras: encontre *frase NAKA*</h1>
+  <h1>Caça-Palavras: encontre o seu PSI</h1>
   <div class="info">
-    <div class="hint">Clique nas letras, em ordem, para formar o nome. Você pode clicar de novo para desmarcar.</div>
+    <div class="hint">Clique nas letras, em ordem, para encontrar a sua direção. Você pode clicar de novo para desmarcar.</div>
   </div>
 
   <div id="board" class="board" aria-label="grade do caça palavras"></div>
 
   <div class="controls">
     <button id="check">Checar</button>
+    <button id="reveal">Revelar Resposta</button>
     <button id="reset">Limpar seleção</button>
   </div>
 
@@ -37,52 +38,48 @@
 
   <script>
     const TARGET = 'NATHFLECHER';
-    const SIZE = TARGET.length; // 14x14
+    const ROWS = 12;
+    const COLS = 12;
 
-    const DIRECTIONS = [
-      {dr:0, dc:1},   // horizontal direita
-      {dr:1, dc:0},   // vertical baixo
-      {dr:1, dc:1}    // diagonal
+    const directions = [
+      { dr: 0, dc: 1 },  // direita
+      { dr: 1, dc: 0 },  // para baixo
+      { dr: 1, dc: 1 },  // diagonal para baixo direita
+      { dr: -1, dc: 1 }  // diagonal para cima direita
     ];
 
-    function randLetter(){
+    const dir = directions[Math.floor(Math.random() * directions.length)];
+    const startRow = Math.floor(Math.random() * (ROWS - (dir.dr * (TARGET.length - 1))));
+    const startCol = Math.floor(Math.random() * (COLS - (dir.dc * (TARGET.length - 1))));
+
+    function randLetter() {
       const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-      return alphabet[Math.floor(Math.random()*alphabet.length)];
+      return alphabet[Math.floor(Math.random() * alphabet.length)];
     }
 
-    function createGrid(){
-      return Array.from({length: SIZE}, ()=>Array.from({length: SIZE}, ()=>randLetter()));
+    const grid = Array.from({ length: ROWS }, () => Array.from({ length: COLS }, () => randLetter()));
+
+    for (let i = 0; i < TARGET.length; i++) {
+      const r = startRow + i * dir.dr;
+      const c = startCol + i * dir.dc;
+      if (r >= 0 && r < ROWS && c >= 0 && c < COLS) grid[r][c] = TARGET[i];
     }
-
-    function placeWord(grid){
-      const direction = DIRECTIONS[Math.floor(Math.random()*DIRECTIONS.length)];
-      const maxRow = SIZE - (direction.dr ? TARGET.length : 0);
-      const maxCol = SIZE - (direction.dc ? TARGET.length : 0);
-      const startRow = Math.floor(Math.random()*maxRow);
-      const startCol = Math.floor(Math.random()*maxCol);
-
-      for(let i=0;i<TARGET.length;i++){
-        const r = startRow + direction.dr * i;
-        const c = startCol + direction.dc * i;
-        grid[r][c] = TARGET[i];
-      }
-    }
-
-    let grid = createGrid();
-    placeWord(grid);
 
     const board = document.getElementById('board');
     const selCountEl = document.getElementById('selCount');
     let selection = [];
 
-    function draw(){
+    function draw() {
       board.innerHTML = '';
-      for(let r=0;r<SIZE;r++){
-        for(let c=0;c<SIZE;c++){
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
           const letter = grid[r][c];
           const cell = document.createElement('div');
           cell.className = 'cell';
-          cell.dataset.r = r; cell.dataset.c = c; cell.dataset.letter = letter;
+          cell.dataset.r = r;
+          cell.dataset.c = c;
+          cell.dataset.letter = letter;
+          cell.tabIndex = 0;
           cell.textContent = letter;
           cell.addEventListener('click', onCellClick);
           board.appendChild(cell);
@@ -91,56 +88,66 @@
       updateStatus();
     }
 
-    function onCellClick(){
+    function onCellClick(e) {
       const r = Number(this.dataset.r);
       const c = Number(this.dataset.c);
       const key = `${r},${c}`;
-      const idx = selection.findIndex(s=>s.key===key);
-      if(idx > -1){
-        selection.splice(idx,1);
+      const idx = selection.findIndex(s => s.key === key);
+      if (idx > -1) {
+        selection.splice(idx, 1);
       } else {
-        selection.push({key, r, c, letter:this.dataset.letter});
+        selection.push({ key, r, c, letter: this.dataset.letter });
       }
       renderSelection();
     }
 
-    function renderSelection(){
-      document.querySelectorAll('.cell').forEach(el=>el.classList.remove('selected'));
-      selection.forEach(s=>{
+    function renderSelection() {
+      document.querySelectorAll('.cell').forEach(el => el.classList.remove('selected'));
+      selection.forEach(s => {
         const el = document.querySelector(`.cell[data-r='${s.r}'][data-c='${s.c}']`);
-        if(el) el.classList.add('selected');
+        if (el) el.classList.add('selected');
       });
       updateStatus();
     }
 
-    function updateStatus(){
+    function updateStatus() {
       selCountEl.textContent = selection.length;
     }
 
-    document.getElementById('check').addEventListener('click', ()=>{
-      const formed = selection.map(s=>s.letter).join('');
-      if(formed === TARGET){
-        selection.forEach(s=>{
+    document.getElementById('check').addEventListener('click', () => {
+      const formed = selection.map(s => s.letter).join('');
+      if (formed === TARGET) {
+        selection.forEach(s => {
           const el = document.querySelector(`.cell[data-r='${s.r}'][data-c='${s.c}']`);
-          if(el){ el.classList.remove('selected'); el.classList.add('found'); }
+          if (el) { el.classList.remove('selected'); el.classList.add('found'); }
         });
         selection = [];
         updateStatus();
-        window.alert(`Parabéns! A palavra é ${TARGET}. Agora, encontre sua direção.`);
+        alert(`Parabéns! A palavra é ${TARGET}. Agora, encontre sua direção.`);
       } else {
-        selection.forEach(s=>{
+        selection.forEach(s => {
           const el = document.querySelector(`.cell[data-r='${s.r}'][data-c='${s.c}']`);
-          if(el){ el.classList.add('wrong'); }
+          if (el) el.classList.add('wrong');
         });
-        setTimeout(()=>{
+        setTimeout(() => {
           selection = [];
-          document.querySelectorAll('.cell').forEach(el=>el.classList.remove('wrong','selected'));
+          document.querySelectorAll('.cell').forEach(el => el.classList.remove('wrong', 'selected'));
           updateStatus();
         }, 1500);
       }
     });
 
-    document.getElementById('reset').addEventListener('click', ()=>{ selection = []; renderSelection(); });
+    document.getElementById('reset').addEventListener('click', () => { selection = []; renderSelection(); });
+
+    document.getElementById('reveal').addEventListener('click', () => {
+      document.querySelectorAll('.cell').forEach(el => el.classList.remove('found'));
+      for (let i = 0; i < TARGET.length; i++) {
+        const r = startRow + i * dir.dr;
+        const c = startCol + i * dir.dc;
+        const el = document.querySelector(`.cell[data-r='${r}'][data-c='${c}']`);
+        if (el) el.classList.add('found');
+      }
+    });
 
     draw();
   </script>
