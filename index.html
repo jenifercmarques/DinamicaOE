@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Caça-Palavras — Nath Flecher</title>
+  <title>Caça-Palavras — Econtre o PSIr</title>
   <style>
     :root { --accent:#2b6cb0; --accent-2:#2c7a7b; }
     body { font-family: Inter, system-ui, Arial; display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 28px; background: #f7fafc; color: #0f172a; }
@@ -21,16 +21,15 @@
   </style>
 </head>
 <body>
-  <h1>Caça-Palavras: encontre "NATHFLECHER"</h1>
+  <h1>Caça-Palavras - Dinamica OE</h1>
   <div class="info">
-    <div class="hint">Clique nas letras, em ordem, para formar o nome <strong>NATHFLECHER</strong> (sem espaço). Você pode clicar de novo para desmarcar.</div>
+    <div class="hint">Clique nas letras, em ordem, para encontrar a sua direção. Você pode clicar de novo para desmarcar.</div>
   </div>
 
   <div id="board" class="board" aria-label="grade do caça palavras"></div>
 
   <div class="controls">
     <button id="check">Checar</button>
-    <button id="reveal">Revelar Resposta</button>
     <button id="reset">Limpar seleção</button>
   </div>
 
@@ -134,6 +133,7 @@
         });
         selection = [];
         updateStatus();
+        // Pop-up ao acertar
         alert(`Parabéns! A palavra é ${TARGET}. Agora, encontre sua direção.`);
       } else {
         selection.forEach(s => {
@@ -149,31 +149,6 @@
     });
 
     document.getElementById('reset').addEventListener('click', () => { selection = []; renderSelection(); });
-
-    document.getElementById('reveal').addEventListener('click', () => {
-      document.querySelectorAll('.cell').forEach(el => el.classList.remove('found'));
-      for (let r = 0; r < SIZE; r++) {
-        for (let c = 0; c < SIZE; c++) {
-          if (grid[r][c] === TARGET[0]) {
-            for (const dir of directions) {
-              let match = true;
-              for (let i = 0; i < TARGET.length; i++) {
-                const nr = r + i * dir.dr;
-                const nc = c + i * dir.dc;
-                if (nr < 0 || nr >= SIZE || nc < 0 || nc >= SIZE || grid[nr][nc] !== TARGET[i]) { match = false; break; }
-              }
-              if (match) {
-                for (let i = 0; i < TARGET.length; i++) {
-                  const el = document.querySelector(`.cell[data-r='${r + i * dir.dr}'][data-c='${c + i * dir.dc}']`);
-                  if (el) el.classList.add('found');
-                }
-                return;
-              }
-            }
-          }
-        }
-      }
-    });
 
     draw();
   </script>
